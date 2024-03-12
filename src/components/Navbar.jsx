@@ -1,5 +1,6 @@
 import { Box, Flex, Button } from "@chakra-ui/react";
 import { FaHome } from "react-icons/fa";
+import { Link as RouterLink } from "react-router-dom";
 
 const Navbar = () => {
   return (
@@ -7,8 +8,14 @@ const Navbar = () => {
       <Box fontSize="xl" fontWeight="bold">
         My React App
       </Box>
-      <Button leftIcon={<FaHome />} variant="ghost" colorScheme="teal">
+      <Button leftIcon={<FaHome />} as={RouterLink} to="/" variant="ghost" colorScheme="teal">
         Home
+      </Button>
+      <Button as={RouterLink} to="/chat" variant="ghost" colorScheme="teal">
+        Chat
+      </Button>
+      <Button as={RouterLink} to="/login" variant="ghost" colorScheme="teal">
+        Login
       </Button>
     </Flex>
   );
