@@ -1,0 +1,248 @@
+import React, { useState, useEffect } from "react";
+import { ChakraProvider, Box, VStack, Heading, FormControl, FormLabel, Input, Button, Text, Stack, useToast, List, ListItem, Divider } from "@chakra-ui/react";
+import { FaSignInAlt, FaUserPlus, FaPaperPlane } from "react-icons/fa";
+
+const apiBaseUrl = "https://backengine-cbut.fly.dev";
+
+const Index = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [accessToken, setAccessToken] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [chats, setChats] = useState([]);
+  const [selectedChatId, setSelectedChatId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [messageContent, setMessageContent] = useState("");
+  const toast = useToast();
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchChats();
+    }
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (selectedChatId) {
+      fetchMessages(selectedChatId);
+    }
+  }, [selectedChatId]);
+
+  const handleSignup = async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.status === 204) {
+        toast({
+          title: "Account created.",
+          description: "You can now log in.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error);
+      }
+    } catch (error) {
+      toast({
+        title: "Error signing up.",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.status === 200) {
+        const data = await response.json();
+        setAccessToken(data.accessToken);
+        setIsLoggedIn(true);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error);
+      }
+    } catch (error) {
+      toast({
+        title: "Error logging in.",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const fetchChats = async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/chats`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.status === 200) {
+        const data = await response.json();
+        setChats(data);
+      } else {
+        throw new Error("Failed to fetch chats.");
+      }
+    } catch (error) {
+      toast({
+        title: "Error fetching chats.",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const fetchMessages = async (chatId) => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/chats/${chatId}/messages`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.status === 200) {
+        const data = await response.json();
+        setMessages(data);
+      } else {
+        throw new Error("Failed to fetch messages.");
+      }
+    } catch (error) {
+      toast({
+        title: "Error fetching messages.",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleSendMessage = async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/chats/${selectedChatId}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ content: messageContent }),
+      });
+
+      if (response.status === 200) {
+        setMessageContent("");
+        fetchMessages(selectedChatId);
+      } else {
+        throw new Error("Failed to send message.");
+      }
+    } catch (error) {
+      toast({
+        title: "Error sending message.",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setAccessToken("");
+    setEmail("");
+    setPassword("");
+    setChats([]);
+    setSelectedChatId(null);
+    setMessages([]);
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <ChakraProvider>
+        <Box p={8}>
+          <VStack spacing={4} align="flex-start">
+            <Heading>Interactive Chat</Heading>
+            <FormControl id="email">
+              <FormLabel>Email address</FormLabel>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </FormControl>
+            <FormControl id="password">
+              <FormLabel>Password</FormLabel>
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            </FormControl>
+            <Stack direction="row" spacing={4}>
+              <Button leftIcon={<FaSignInAlt />} colorScheme="teal" onClick={handleLogin}>
+                Log in
+              </Button>
+              <Button leftIcon={<FaUserPlus />} colorScheme="gray" onClick={handleSignup}>
+                Sign up
+              </Button>
+            </Stack>
+          </VStack>
+        </Box>
+      </ChakraProvider>
+    );
+  }
+
+  return (
+    <ChakraProvider>
+      <Box p={8}>
+        <VStack spacing={4} align="flex-start">
+          <Button colorScheme="red" onClick={handleLogout}>
+            Logout
+          </Button>
+          <Heading>Chats</Heading>
+          <List w="100%">
+            {chats.map((chat) => (
+              <ListItem key={chat.id} p={2} onClick={() => setSelectedChatId(chat.id)} cursor="pointer" bg={selectedChatId === chat.id ? "teal.100" : "transparent"}>
+                {chat.name}
+                <Divider my={2} />
+              </ListItem>
+            ))}
+          </List>
+          {selectedChatId && (
+            <>
+              <Heading size="md">Messages</Heading>
+              <List w="100%" h="300px" overflowY="scroll" bg="gray.50" p={2}>
+                {messages.map((message, index) => (
+                  <ListItem key={index} mb={2}>
+                    <Text fontSize="sm">{message.content}</Text>
+                  </ListItem>
+                ))}
+              </List>
+              <FormControl id="message" d="flex" alignItems="center">
+                <Input type="text" value={messageContent} onChange={(e) => setMessageContent(e.target.value)} placeholder="Type a message..." />
+                <Button leftIcon={<FaPaperPlane />} colorScheme="teal" ml={2} onClick={handleSendMessage} isDisabled={!messageContent.trim()}>
+                  Send
+                </Button>
+              </FormControl>
+            </>
+          )}
+        </VStack>
+      </Box>
+    </ChakraProvider>
+  );
+};
+
+export default Index;
