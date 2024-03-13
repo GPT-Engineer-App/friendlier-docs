@@ -17,6 +17,9 @@ const Navbar = () => {
       <Button as={RouterLink} to="/login" variant="ghost" colorScheme="teal">
         Login
       </Button>
+      <Button as={RouterLink} to="/chatroom" variant="ghost" colorScheme="teal">
+        Chat Room
+      </Button>
     </Flex>
   );
 };
