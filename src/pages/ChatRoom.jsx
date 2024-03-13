@@ -1,7 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, VStack, Text, Input, Button, HStack, useToast } from "@chakra-ui/react";
-
-import { useEffect } from "react";
 
 const ChatRoom = () => {
   const [inputValue, setInputValue] = useState("");
@@ -25,7 +23,7 @@ const ChatRoom = () => {
         headers: {
           "Content-Type": "application/json",
 
-          Authorization: "Bearer your-access-token",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
         body: JSON.stringify({ content: inputValue }),
       });
